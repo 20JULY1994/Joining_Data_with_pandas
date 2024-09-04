@@ -1,4 +1,15 @@
-# Joining_Data_with_pandas
+# Joining Data with pandas
+---
+
+## Table of Contents
+- [EXERCISE 1](#exercise-1)
+- [EXERCISE 2](#exercise-2)
+- [EXERCISE 3](#exercise-3)
+- [EXERCISE 4](#exercise-4)
+- [EXERCISE 5](#exercise-5)
+- [EXERCISE 6](#exercise-6)
+- [EXERCISE 7](#exercise-7)
+- [EXERCISE 8](#exercise-8)
 
 Run the hidden code cell below to import a few of the datasets used in this course.
 
