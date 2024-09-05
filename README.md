@@ -10,6 +10,10 @@
 - [EXERCISE 6](#exercise-6)
 - [EXERCISE 7](#exercise-7)
 - [EXERCISE 8](#exercise-8)
+- [EXERCISE 9](#exercise-9)
+- [EXERCISE 10](#exercise-10)
+- [EXERCISE 11](#exercise-11)
+- [EXERCISE 12](#exercise-12)
 
 Run the hidden code cell below to import a few of the datasets used in this course.
 
@@ -332,6 +336,7 @@ print(movies_ratings.head())
 ```python
 # Import pandas
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Import the dataset
 sequels = pd.read_pickle("datasets/sequels.p")
@@ -359,13 +364,319 @@ print(titles_diff.sort_values('diff', ascending=False).head())
 293   Indiana Jones and the Temple of Doom              Man of Steel  329845518.0
 1084                                   Saw          Superman Returns  287169523.0
 1334                        The Terminator          Star Trek Beyond  265100616.0
+
+# Sort the steps in the correct order of the technique shown to perform a semi join in pandas.
 ```
 
 ## EXERCISE 8
 ---
 
+### Performing right join
+
+> [!NOTE]
+> Datasets for the most of the remaining codes are not available, nevertheless, they will serve as guide for future revision and learnings.
+
+```python
+# Import pandas
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Right join to find unique movies
+# Merge action_movies and scifi_movies tables with a right join on movie_id. Save the result as action_scifi.
+action_scifi = action_movies.merge(scifi_movies, on='movie_id', how='right')
+
+# Update the merge to add suffixes, where '_act' and '_sci' are suffixes for the left and right tables, respectively.
+action_scifi = action_movies.merge(scifi_movies, on='movie_id', how='right', suffixes=('_act', '_sci'))
+
+# Print the first few rows of action_scifi to see the structure
+print(action_scifi.head())
+
+# From action_scifi, subset only the rows where the genre_act column is null.
+scifi_only = action_scifi[action_scifi['genre_act'].isnull()]
+
+# Merge movies and scifi_only using the id column in the left table and the movie_id column in the right table with an inner join.
+movies_and_scifi_only = movies.merge(scifi_only, left_on='id', right_on='movie_id')
+
+# Print the first few rows and shape of movies_and_scifi_only
+print(movies_and_scifi_only.head())
+print(movies_and_scifi_only.shape)
+
+# Merge movie_to_genres and pop_movies using a right join. Save the results as genres_movies.
+genres_movies = movie_to_genres.merge(pop_movies, how='right', 
+                                      left_on='movie_id', 
+                                      right_on='id')
+                                      
+# Group genres_movies by genre and count the number of id values.
+genre_count = genres_movies.groupby('genre').agg({'id':'count'})
+
+# Plot a bar chart of the genre_count
+genre_count.plot(kind='bar')
+plt.show()
+
+# Using outer join to select actors
+# One cool aspect of using an outer join is that, because it returns all rows from both merged tables and null where they do not match, you can use it to find rows that do not have a match in the other table. 
+
+# Save to iron_1_and_2 the merge of iron_1_actors (left) with iron_2_actors tables with an outer join on the id column, and set suffixes to ('_1','_2').
+iron_1_and_2 = iron_1_actors.merge(iron_2_actors,
+                                     on='id',
+                                     how='outer',
+                                     suffixes=('_1', '_2'))
+
+# Create an index that returns True if name_1 or name_2 are null, and False otherwise.
+m = ((iron_1_and_2['name_1'].isnull()) | 
+     (iron_1_and_2['name_2'].isnull()))
+     
+# Print the first few rows of iron_1_and_2
+print(iron_1_and_2[m].head())
+
+# pandas treats a merge of a table to itself the same as any other merge. Therefore, it does not limit you from chaining multiple .merge() methods together.
+```
+
+## EXERCISE 9
+---
+
 ### Performing an anti join
 
 > [!NOTE]
-> Check up right, anti and semi join technique in another resources.
+> In our music streaming company dataset, each customer is assigned an employee representative to assist them. In this exercise, filter the employee table by a table of top customers, returning only those employees who are not assigned to a customer. The results should resemble the results of an anti join. The company's leadership will assign these employees additional training so that they can work with high valued customers.
+
+```python
+# Import pandas
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Merge employees and top_cust with a left join, setting indicator argument to True. Save the result to empl_cust.
+empl_cust = employees.merge(top_cust, on='srid', 
+                            how='left', indicator=True)
+                            
+# Select the srid column of empl_cust and the rows where _merge is 'left_only'. Save the result to srid_list.
+srid_list = empl_cust.loc[empl_cust['_merge'] == 'left_only','srid']
+
+# Subset the employees table and select those rows where the srid is in the variable srid_list and print the results.
+print(employees[employees['srid'].isin(srid_list)])
+
+# Performing a semi join
+# Some of the tracks that have generated the most significant amount of revenue are from TV-shows or are other non-musical audio. You have been given a table of invoices that include top revenue-generating items. Additionally, you have a table of non-musical tracks from the streaming service. In this exercise, you'll use a semi join to find the top revenue-generating non-musical tracks.
+
+# Merge non_mus_tcks and top_invoices on tid using an inner join. Save the result as tracks_invoices.
+tracks_invoices = non_mus_tcks.merge(top_invoices, on='tid')
+
+# Use .isin() to subset the rows of non_mus_tck where tid is in the tid column of tracks_invoices. Save the result as top_tracks.
+top_tracks = non_mus_tcks[non_mus_tcks['tid'].isin(tracks_invoices['tid'])]
+
+# Group top_tracks by gid and count the tid rows. Save the result to cnt_by_gid.
+cnt_by_gid = top_tracks.groupby(['gid'], as_index=False).agg({'tid':'count'})
+
+# Merge cnt_by_gid with the genres table on gid and print the result.
+print(cnt_by_gid.merge(genres, on='gid'))
+```
+
+### EXERCISE 10
+---
+
+### Concatenate DataFrames together vertically
+
+```python
+# Import pandas and matplotlib
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Concatenate tracks_master, tracks_ride, and tracks_st, in that order, setting sort to True.
+tracks_from_albums = pd.concat([tracks_master,tracks_ride, tracks_st],
+                               sort=True)
+                               
+# Concatenate tracks_master, tracks_ride, and tracks_st, where the index goes from 0 to n-1.
+tracks_from_albums = pd.concat([tracks_master, tracks_ride, tracks_st],
+                               ignore_index=True,
+                               sort=True)
+# Concatenate tracks_master, tracks_ride, and tracks_st, showing only columns that are in all tables.
+tracks_from_albums = pd.concat([tracks_master, tracks_ride, tracks_st],
+                               join='inner',
+                               sort=True)
+print(tracks_from_albums)
+
+# Concatenate the three tables together vertically in order with the oldest month first, adding '7Jul', '8Aug', and '9Sep' as keys for their respective months, and save to variable avg_inv_by_month.
+inv_jul_thr_sep = pd.concat([inv_jul, inv_aug, inv_sep], 
+                            keys=['7Jul', '8Aug', '9Sep'])
+
+# Use the .agg() method to find the average of the total column from the grouped invoices.
+avg_inv_by_month = inv_jul_thr_sep.groupby(level=0).agg({'total': 'mean'})
+
+# Create a bar chart of avg_inv_by_month.
+avg_inv_by_month.plot(kind='bar')
+plt.show()
+
+# Concatenate the classic_18 and classic_19 tables vertically where the index goes from 0 to n-1, and save to classic_18_19.
+classic_18_19 = pd.concat([classic_18, classic_19], ignore_index=True)
+
+# Concatenate the pop_18 and pop_19 tables vertically where the index goes from 0 to n-1, and save to pop_18_19.
+pop_18_19 = pd.concat([pop_18, pop_19], ignore_index=True)
+
+# With classic_18_19 on the left, merge it with pop_18_19 on tid using an inner join.
+classic_pop = classic_18_19.merge(pop_18_19, on='tid')
+
+# Use .isin() to filter classic_18_19 where tid is in classic_pop.
+popular_classic = classic_18_19[classic_18_19['tid'].isin(classic_pop['tid'])]
+
+# Print popular chart
+print(popular_classic)
+```
+
+## EXERCISE 11
+---
+
+### Using Merge_ordered()
+
+```python
+# Import pandas and matplotlib
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# import datasets
+sp500 = pd.read_csv("datasets/S&P500.csv")
+gdp = pd.read_csv("datasets/WorldBank_GDP.csv")
+
+# Use merge_ordered() to merge gdp and sp500 using a left join on year and date. Save the results as gdp_sp500.
+gdp_sp500 = pd.merge_ordered(gdp, sp500, left_on='Year', right_on='Date', how='left')
+
+
+# Use merge_ordered(), again similar to before, to merge gdp and sp500 use the function's ability to interpolate missing data to forward fill the missing value for returns, assigning this table to the variable gdp_sp500.
+gdp_sp500 = pd.merge_ordered(gdp, sp500, left_on='Year', right_on='Date', 
+                             how='left', fill_method='ffill') # Yet to debug the issue with this code
+
+# Print gdp_sp500
+print (gdp_sp500.head(5))
+    Country Name Country Code     Indicator Name  Year           GDP    Date  Returns
+0          China          CHN  GDP (current US$)  2010  6.087160e+12  2010.0    12.78
+1        Germany          DEU  GDP (current US$)  2010  3.417090e+12  2010.0    12.78
+2          Japan          JPN  GDP (current US$)  2010  5.700100e+12  2010.0    12.78
+3  United States          USA  GDP (current US$)  2010  1.499210e+13  2010.0    12.78
+4          China          CHN  GDP (current US$)  2011  7.551500e+12  2011.0     0.00
+
+# Subset the gdp_sp500 table, select the gdp and returns columns, and save as gdp_returns.
+gdp_returns = gdp_sp500[['GDP', 'Returns']]
+
+# Print the correlation matrix of the gdp_returns table using the .corr() method.
+print(gdp_returns.corr())
+              GDP   Returns
+GDP      1.000000  0.016027
+Returns  0.016027  1.000000
+
+# Use merge_ordered() to merge the inflation and unemployment tables on date with an inner join, and save the results as inflation_unemploy.
+inflation_unemploy = pd.merge_ordered(inflation, unemployment, on='date', how='inner')
+
+# Print the inflation_unemploy variable.
+print(inflation_unemploy)
+
+# Using inflation_unemploy, create a scatter plot with unemployment_rate on the horizontal axis and cpi (inflation) on the vertical axis.
+inflation_unemploy.plot(x='unemployment_rate', y='cpi', kind='scatter')
+plt.show()
+
+# Use merge_ordered() on gdp and pop, merging on columns date and country with the fill feature, save to ctry_date.
+ctry_date = pd.merge_ordered(gdp, pop, on=('date','country'), 
+                             fill_method='ffill')
+
+# Print ctry_date
+print(ctry_date)
+
+# Perform the same merge of gdp and pop, but join on country and date (reverse of step 1) with the fill feature, saving this as date_ctry.
+date_ctry = pd.merge_ordered(gdp, pop, on=('country', 'date'), fill_method='ffill')
+
+# Print date_ctry
+print(date_ctry)
+
+# When you merge on date first, the table is sorted by date then country. When forward fill is applied, Sweden's population value in January is used to fill in the missing values for both Australia and the Sweden for the remainder of the year. This is not what you want. The fill forward is using unintended data to fill in the missing values. However, when you merge on country first, the table is sorted by country then date, so the forward fill is applied appropriately in this situation.
+
+# Use merge_asof() to merge jpm (left table) and wells together on the date_time column, where the rows with the nearest times are matched, and with suffixes=('', '_wells'). Save to jpm_wells.
+jpm_wells = pd.merge_asof(jpm, wells, on='date_time', direction='nearest', suffixes=('', '_wells'))
+
+# Use merge_asof() to merge jpm_wells (left table) and bac together on the date_time column, where the rows with the closest times are matched, and with suffixes=('_jpm', '_bac'). Save to jpm_wells_bac.
+jpm_wells_bac = pd.merge_asof(jpm_wells, bac, on='date_time', direction='nearest', suffixes=('_jpm', '_bac'))
+
+# Using price_diffs, create a line plot of the close price of JPM, WFC, and BAC only.
+price_diffs = jpm_wells_bac.diff()
+
+# Plot the price diff of the close of jpm, wells and bac only
+price_diffs.plot(y=['close_jpm', 'close_wells', 'close_bac'], kind='line')
+plt.show()
+
+# Using merge_asof(), merge gdp and recession on date, with gdp as the left table. Save to the variable gdp_recession.
+gdp_recession = pd.merge_asof(gdp, recession, on='date')
+
+# Create a list using a list comprehension and a conditional expression, named is_recession, where for each row if the gdp_recession['econ_status'] value is equal to 'recession' then enter 'r' else 'g'.
+is_recession = ['r' if s=='recession' else 'g' for s in gdp_recession['econ_status']]
+
+# Using gdp_recession, plot a bar chart of gdp versus date, setting the color argument equal to is_recession.
+gdp_recession.plot(kind='bar', y='gdp', x='date', color=is_recession, rot=90)
+plt.show()
+```
+
+## EXERCISE 11
+---
+
+### Explore financials with .query()
+
+> [!NOTE]
+> You have been given a table of financial data from some popular social network companies called social_fin. All of the values are in thousands of US dollars.
+
+```python
+# Select rows where the value is greater than $50,000,000K.
+social_fin.query('value > 50000000')
+
+# Select rows for total revenue for Facebook.
+social_fin.query('financial == "total_revenue" and (company == "facebook")')
+
+# Select rows where the net income has a negative value.
+social_fin.query('financial == "net_income" and (value < 0)')
+
+# Select rows where the gross profit is greater than $100K.
+social_fin.query('financial == "gross_profit" and (value > 100000)')
+
+# Use merge_ordered() on gdp and pop on columns country and date with the fill feature, save to gdp_pop and print.
+gdp_pop = pd.merge_ordered(gdp, pop, on=['country','date'], fill_method='ffill')
+
+# Add a column named gdp_per_capita to gdp_pop that divides gdp by pop.
+gdp_pop['gdp_per_capita'] = gdp_pop['gdp'] / gdp_pop['pop']
+
+# Pivot gdp_pop so values='gdp_per_capita', index='date', and columns='country', save as gdp_pivot.
+gdp_pivot = gdp_pop.pivot_table('gdp_per_capita', 'date', 'country')
+
+# Use .query() to select rows from gdp_pivot where date is greater than equal to "1991-01-01". Save as recent_gdp_pop.
+recent_gdp_pop = gdp_pivot.query('(date >= "1991-01-01")')
+```
+
+## EXERCISE 12
+---
+
+> [!NOTE]
+>  Using .melt() to reshape government data
+> The US Bureau of Labor Statistics (BLS) often provides data series in an easy-to-read format - it has a separate column for each month, and each year is a different row. Unfortunately, this wide format makes it difficult to plot this information over time. In this exercise, you will reshape a table of US unemployment rate data from the BLS into a form you can plot using .melt(). You will need to add a date column to the table and sort by it to plot the data correctly.
+
+```python
+# Use .melt() to unpivot all of the columns of ur_wide except year and ensure that the columns with the months and values are named month and unempl_rate, respectively. Save the result as ur_tall.
+ur_tall = ur_wide.melt(id_vars=['year'], var_name=['month'], value_name='unempl_rate')
+
+# Add a column to ur_tall named date which combines the year and month columns as year-month format into a larger string, and converts it to a date data type.
+ur_tall['date'] = pd.to_datetime(ur_tall['year'] + '-' + ur_tall['month'])
+
+# Sort ur_tall by date and save as ur_sorted.
+ur_sorted = ur_tall.sort_values('date', ascending=True)
+
+# Using ur_sorted, plot unempl_rate on the y-axis and date on the x-axis.
+ur_sorted.plot(x='date', y='unempl_rate')
+plt.show()
+
+# Use .melt() on ten_yr to unpivot everything except the metric column, setting var_name='date' and value_name='close'. Save the result to bond_perc.
+bond_perc = ten_yr.melt(id_vars=['metric'], var_name=['date'], value_name='close')
+
+# Using the .query() method, select only those rows were metric equals 'close', and save to bond_perc_close.
+bond_perc_close = bond_perc.query('(metric == "close")')
+
+# Use merge_ordered() to merge dji (left table) and bond_perc_close on date with an inner join, and set suffixes equal to ('_dow', '_bond'). Save the result to dow_bond.
+dow_bond = pd.merge_ordered(dji, bond_perc_close, on='date', how= 'inner', suffixes= ('_dow', '_bond'))
+
+# Using dow_bond, plot only the Dow and bond values.
+dow_bond.plot(y = ["close_dow", "close_bond"], x='date', rot=90)
+plt.show()
+```
 
